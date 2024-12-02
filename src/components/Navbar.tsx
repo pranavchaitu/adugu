@@ -5,9 +5,9 @@ import { buttonVariants } from "./ui/button";
 import { ArrowRight } from "lucide-react";
 import { getKindeServerSession, LoginLink, RegisterLink } from "@kinde-oss/kinde-auth-nextjs/server";
 
-function Navbar() {
+async function Navbar() {
   const { getUser } = getKindeServerSession()
-  const user = getUser()
+  const user = await getUser()
 
 	return (	
 		<nav className="sticky h-14 inset-x-0 top-0 z-30 w-full border-b border-gray-200 dark:border-none bg-white/75 dark:bg-transparent backdrop-blur-lg transition-all">
@@ -21,7 +21,7 @@ function Navbar() {
 							</Link>
 
 							<div className="hidden sm:flex items-center space-x-4">
-								{!user ? ( 
+								{!user || !user.id ? ( 
                 <>
                   <Link
                     href='/pricing'
