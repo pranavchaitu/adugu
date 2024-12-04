@@ -56,6 +56,19 @@ export const appRouter = router({
         })
         return file
     }),
+    getFile : privateProcedure.input(z.object({
+        key : z.string()
+    })).mutation( async ({ ctx,input }) => {
+        const { userId } = ctx
+        const file = await db.file.findFirst({
+            where : {
+                key : input.key,
+                userId
+            }
+        })
+        if(!file) throw new TRPCError({code : "UNAUTHORIZED"})
+        return file
+    })
 })
 
 export type AppRouter = typeof appRouter

@@ -1,16 +1,111 @@
-import { Copy } from "lucide-react"
+import { Cloud, File } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
-  DialogClose,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import Dropzone from "react-dropzone"
+import { useState } from "react"
+import { Progress } from "./ui/progress"
+import { useUploadThing } from "@/lib/uploadthing"
+import { toast } from "@/hooks/use-toast"
+import { trpc } from "@/app/_trpc/client"
+import { useRouter } from "next/navigation"
+
+function UploadDropzone() {
+  const [isUploading, setIsUploading] = useState<boolean>(false)
+  const [uploadProgress, setUploadProgress] = useState<number>(0)
+  const { startUpload } = useUploadThing("pdfUploader")
+  const router = useRouter()
+  const { mutate : startPolling } = trpc.getFile.useMutation({
+    onSuccess(file) {
+      router.push(`/dashboard/${file.id}`)
+    },
+    retry : true,
+    retryDelay : 500,
+  })
+
+  function startSimulatedProgress() {
+    setUploadProgress(0)
+    const interval = setInterval(() => {
+      setUploadProgress((prevProgress) => {
+        if(uploadProgress >= 95) {
+          clearInterval(interval)
+          return prevProgress
+        }
+        return prevProgress + 5
+      })
+    },500)
+    return interval
+  }
+
+  return <Dropzone multiple={false} onDrop={async (acceptedFile) => {
+    setIsUploading(true)
+    const progressInterval = startSimulatedProgress()
+    // the upload thing call
+    const res = await startUpload(acceptedFile)
+
+    if(!res) {
+      return toast({
+        title : "Something went wrong",
+        description : "Please try again later",
+        variant : "destructive"
+      })
+    } 
+
+    const [fileResponse] = res 
+
+    const { key } = fileResponse
+    if(!key) {
+      return toast({
+        title : "Something went wrong",
+        description : "Please try again later",
+        variant : "destructive"
+      })
+    }
+
+    clearInterval(progressInterval)
+    setUploadProgress(100)
+    startPolling({ key })
+
+  }}>
+    {({getRootProps, getInputProps, acceptedFiles}) => (
+      <div {...getRootProps()}
+        className="border border-dashed h-64 m-4 rounded-lg border-gray-300"
+      >
+        <div className="flex flex-col items-center justify-center w-full h-full rounded-lg gap-2">
+          <Cloud className="w-5 h-5"/>
+          <label htmlFor="dropzone-file"
+            className="text-xs cursor-pointer">
+            <div className="flex flex-col items-center gap-2">
+              <div>
+                <span className="font-semibold">Click to upload{" "}</span>or drag and drop
+              </div>
+              {acceptedFiles && acceptedFiles[0] ? (
+                <div className="px-2 flex gap-2 border divide-x-2 items-center divide-gray-200">
+                  <div className="flex items-center">
+                    <File className="w-4 h-4 text-blue-500"/>
+                  </div>
+                  <div>
+                    <p className="p-2 text-xs pl-2">{acceptedFiles[0].name}</p>
+                  </div>
+                </div>            
+              ):null}
+              {isUploading ? (
+                <Progress value={uploadProgress} />
+              ): null}
+              <input {...getInputProps()} type="file" id="dropzone-file" className="hidden"/>
+            </div>
+            
+          </label>
+        </div>
+      </div>
+    )}
+  </Dropzone>
+}
 
 function UploadButton() {
   return (
@@ -19,27 +114,8 @@ function UploadButton() {
         <Button>Upload PDF</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Share link</DialogTitle>
-          <DialogDescription>
-            Anyone who has this link will be able to view this.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex items-center space-x-2">
-          <div className="grid flex-1 gap-2">
-          </div>
-          <Button type="submit" size="sm" className="px-3">
-            <span className="sr-only">Copy</span>
-            <Copy />
-          </Button>
-        </div>
-        <DialogFooter className="sm:justify-start">
-          <DialogClose asChild>
-            <Button type="button" variant="secondary">
-              Close
-            </Button>
-          </DialogClose>
-        </DialogFooter>
+        <DialogTitle />
+        <UploadDropzone />
       </DialogContent>
     </Dialog>
   )
