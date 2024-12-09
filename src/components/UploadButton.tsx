@@ -1,4 +1,4 @@
-import { Cloud, File } from "lucide-react"
+import { Cloud, File, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -14,6 +14,7 @@ import { useUploadThing } from "@/lib/uploadthing"
 import { toast } from "@/hooks/use-toast"
 import { trpc } from "@/app/_trpc/client"
 import { useRouter } from "next/navigation"
+import createFile from "@/lib/actions/createFile"
 
 function UploadDropzone() {
   const [isUploading, setIsUploading] = useState<boolean>(false)
@@ -67,6 +68,10 @@ function UploadDropzone() {
       })
     }
 
+
+    //custom create for db call
+    createFile(fileResponse)
+
     clearInterval(progressInterval)
     setUploadProgress(100)
     startPolling({ key })
@@ -95,7 +100,15 @@ function UploadDropzone() {
                 </div>            
               ):null}
               {isUploading ? (
-                <Progress value={uploadProgress} />
+                <Progress indicatorColor={
+                  uploadProgress == 100 ? 'bg=green-500' : ""
+                } value={uploadProgress} />
+                // { uploadProgress == 100 ? (
+                //   <div className="text-center">
+                //     <Loader2 className="w-3 h-3 animate-spin"/>
+                //     <div>Redirecting...</div>
+                //   </div>
+                // ) : null }
               ): null}
               <input {...getInputProps()} type="file" id="dropzone-file" className="hidden"/>
             </div>

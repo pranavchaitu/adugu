@@ -5,8 +5,6 @@ import { UploadThingError } from "uploadthing/server";
 
 const f = createUploadthing();
 
-const auth = (req: Request) => ({ id: "fakeId" }); // Fake auth function
-
 export const ourFileRouter = {
   pdfUploader: f({
     pdf: {
@@ -18,14 +16,14 @@ export const ourFileRouter = {
       const  { getUser } = getKindeServerSession()
       const user = await getUser()
       if(!user || !user.id) {
-        throw new Error("Unauthorized")
+        throw new UploadThingError({code : "FORBIDDEN"})
       }
       return {
         userId : user.id
       }
     })
     .onUploadComplete(async ({ metadata, file }) => {
-      const createdFile = await db.file.create({
+      await db.file.create({
         data: {
           key: file.key,
           name: file.name,
