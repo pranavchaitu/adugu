@@ -1,4 +1,6 @@
-import { Document,pdfjs } from "react-pdf"
+'use client'
+
+import { Document,Page,pdfjs } from "react-pdf"
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 
@@ -12,7 +14,9 @@ function PdfRenderer({ url } : PageProps) {
     return <>
         <Document 
             file={url}
-        />
+        >
+            <Page pageNumber={1}/>
+        </Document>
     </>
 }
 
