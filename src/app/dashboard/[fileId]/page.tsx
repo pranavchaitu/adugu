@@ -24,7 +24,6 @@ async function Page({ params } : PageProps) {
     })
     if(!file) return notFound()
     return <div>
-        {params.fileId}
         <div className="grid grid-cols-1 md:grid-cols-5 h-screen">
             <div className="border md:col-span-3">
                 <PdfRenderer url={file.url} />
